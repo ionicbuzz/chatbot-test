@@ -56,16 +56,29 @@ export default function ChatBot() {
 
       const data = await response.json();
 
+      console.log(data);
+
       // Check if the response is an image URL (for cat pictures)
       const isImageUrl = data.type === 'cat' || (data.response && data.response.match(/\.(jpg|jpeg|png|gif|webp)$/i));
       
+      // Handle 'fact' type response
+      let botText = '';
+      let botSource = '';
+      if (data.type === 'fact') {
+        botText = `Fun fact: ${data.response || "Sorry, I couldn't process that request."}`;
+        botSource = data.source || data.url || '';
+      } else {
+        botText = isImageUrl ? "Here's your cat picture!" : (data.response || "Sorry, I couldn't process that request.");
+      }
+
       const botMessage = {
         id: Date.now() + 1,
-        text: isImageUrl ? "Here's your cat picture!" : (data.response || "Sorry, I couldn't process that request."),
+        text: botText,
         sender: 'bot',
         timestamp: new Date(),
         image: isImageUrl ? data.response : (data.image || data.url || (data[0] && data[0].url) || null),
-        type: data.type || null
+        type: data.type || null,
+        source: botSource || null
       };
       
       // Debug: Log what image URL we extracted
@@ -136,6 +149,17 @@ export default function ChatBot() {
                     : 'bg-gray-200 text-gray-800'
                 }`}>
                   <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                  {/* Display source link for fact type */}
+                  {message.type === 'fact' && message.source && (
+                    <a
+                      href={message.source}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-xs text-blue-600 underline mt-1"
+                    >
+                      Source
+                    </a>
+                  )}
                   
                   {/* Display image if present */}
                   {message.image && (
@@ -222,6 +246,13 @@ export default function ChatBot() {
               className="bg-orange-100 hover:bg-orange-200 text-orange-700 px-3 py-1 rounded-full text-sm transition-colors duration-200"
             >
               🐱 Show me a cat
+            </button>
+            <button
+              onClick={() => setInputText('Tell me a fun fact')}
+              disabled={isLoading}
+              className="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 px-3 py-1 rounded-full text-sm transition-colors duration-200"
+            >
+              💡 Tell me a fun fact
             </button>
           </div>
         </div>
